@@ -17,6 +17,18 @@ fn pins(relay_num: u8) -> Result<u8, u8> {
   }
 }
 
+fn pin_on(pin_number: u8) -> Result<(), Box<dyn Error>> {
+  let mut pin = Gpio::new()?.get(pin_number)?.into_output();
+  pin.set_high();
+  Ok(())
+}
+
+fn pin_off(pin_number: u8) -> Result<(), Box<dyn Error>> {
+  let mut pin = Gpio::new()?.get(pin_number)?.into_output();
+  pin.set_low();
+  Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
   let args: Vec<String> = env::args().collect();
   if args.len() != 3 {
@@ -49,12 +61,27 @@ fn main() -> Result<(), Box<dyn Error>> {
       process::exit(4);
     },
   };
+  
 
-  let mut pin = Gpio::new()?.get(pin_number)?.into_output();
+  // The requested GPIO pin will remain in high state if the program is killed
+  // during the sleep phase. This will attempt to clean up and set the pin to low.
+  let pn = pin_number;
+  ctrlc::set_handler(move || {
+    match pin_off(pn) {
+      Ok(_) => (), Err(_) => panic!()
+    };
+    process::exit(0);
+  }).expect("Error setting up Ctrl-C handler");
 
-  pin.set_high();
-  thread::sleep(Duration::new(seconds, 0));
-  pin.set_low();
   println!("Activating relay {} for {} seconds.", relay, seconds);
+
+  match pin_on(pin_number) {
+    Ok(_) => (), Err(_) => panic!()
+  };
+  thread::sleep(Duration::new(seconds, 0));
+  match pin_off(pin_number) { 
+    Ok(_) => (), Err(_) => panic!()
+  };
+  
   Ok(())
 }
