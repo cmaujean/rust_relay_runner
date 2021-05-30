@@ -74,21 +74,15 @@ fn main() -> Result<(), Box<dyn Error>> {
   // during the sleep phase. This will attempt to clean up and set the pin to low.
   let pn = pin_number;
   ctrlc::set_handler(move || {
-    match pin_off(pn) {
-      Ok(_) => (), Err(_) => panic!()
-    };
+    pin_off(pn).unwrap();
     process::exit(0);
   }).expect("Error setting up Ctrl-C handler");
 
   println!("Activating relay {} for {} seconds.", relay, seconds);
 
-  match pin_on(pin_number) {
-    Ok(_) => (), Err(_) => panic!()
-  };
+  pin_on(pin_number).unwrap(); 
   thread::sleep(dura);
-  match pin_off(pin_number) { 
-    Ok(_) => (), Err(_) => panic!()
-  };
+  pin_off(pin_number).unwrap();
   
   Ok(())
 }
