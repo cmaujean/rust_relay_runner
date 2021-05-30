@@ -1,7 +1,7 @@
 use rppal::gpio::Gpio;
 use std::error::Error;
 use std::{env, process, thread};
-use std::time::Duration;
+use float_duration::FloatDuration;
 
 fn print_help(msg: &str) {
   println!("Error: {}", msg);
@@ -17,12 +17,18 @@ fn pins(relay_num: u8) -> Result<u8, u8> {
   }
 }
 
+// GPIO library does not seem to handle clone/copy/move
+// so we set the pin up before each operation, instead of
+// just setting it up once.
 fn pin_on(pin_number: u8) -> Result<(), Box<dyn Error>> {
   let mut pin = Gpio::new()?.get(pin_number)?.into_output();
   pin.set_high();
   Ok(())
 }
 
+// GPIO library does not seem to handle clone/copy/move
+// so we set the pin up before each operation, instead of
+// just setting it up once.
 fn pin_off(pin_number: u8) -> Result<(), Box<dyn Error>> {
   let mut pin = Gpio::new()?.get(pin_number)?.into_output();
   pin.set_low();
@@ -46,13 +52,14 @@ fn main() -> Result<(), Box<dyn Error>> {
   };
 
   let seconds = &args[2];
-  let seconds: u64 = match seconds.trim().parse() {
+  let seconds: f64 = match seconds.trim().parse() {
     Ok(num) => num,
     Err(_) => {
       print_help("Invalid Seconds Argument");
       process::exit(3);
     },
   };
+  let dura = FloatDuration::seconds(seconds).to_std()?;
 
   let pin_number: u8 = match pins(relay) {
     Ok(num) => num,
@@ -78,7 +85,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   match pin_on(pin_number) {
     Ok(_) => (), Err(_) => panic!()
   };
-  thread::sleep(Duration::new(seconds, 0));
+  thread::sleep(dura);
   match pin_off(pin_number) { 
     Ok(_) => (), Err(_) => panic!()
   };
