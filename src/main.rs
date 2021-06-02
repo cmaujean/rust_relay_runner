@@ -3,6 +3,7 @@ use std::error::Error;
 use std::{env, process, thread};
 use float_duration::FloatDuration;
 
+
 fn print_help(msg: &str) {
   println!("Error: {}", msg);
   println!("Usage: relay_runner <relay number> <duration in seconds>");
@@ -22,6 +23,7 @@ fn pins(relay_num: u8) -> Result<u8, u8> {
 // just setting it up once.
 fn pin_on(pin_number: u8) -> Result<(), Box<dyn Error>> {
   let mut pin = Gpio::new()?.get(pin_number)?.into_output();
+  pin.set_reset_on_drop(false);
   pin.set_high();
   Ok(())
 }
@@ -31,6 +33,7 @@ fn pin_on(pin_number: u8) -> Result<(), Box<dyn Error>> {
 // just setting it up once.
 fn pin_off(pin_number: u8) -> Result<(), Box<dyn Error>> {
   let mut pin = Gpio::new()?.get(pin_number)?.into_output();
+  pin.set_reset_on_drop(false);
   pin.set_low();
   Ok(())
 }
